@@ -52,7 +52,7 @@ Install once:
 pip install numpy pandas matplotlib geopandas shapely osmnx scikit-learn rasterio contextily arabic-reshaper python-bidi
 ```
 
-> ⚠️ OSMnx relies on the public **Overpass API**.
+> OSMnx relies on the public **Overpass API**.
 > Large regions or `network_type="all"` may take time.
 
 ---
@@ -207,7 +207,7 @@ All maps are aligned to the same CRS and region.
 
 ---
 
-## 9. Arabic labels (important)
+## 9. Arabic labels (not implemented yet)
 
 Matplotlib does **not** support Arabic shaping by default.
 
