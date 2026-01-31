@@ -1,3 +1,4 @@
 location-history.json
 /venv
 /cache
+/outputs
