@@ -8,14 +8,3 @@ __pycache__/
 *.py[cod]
 *$py.class
 .ipynb_checkpoints/
-
-# Temporary Scripts
-read_nb.py
-modify_notebooks.py
-run_kde.py
-run_vec.py
-debug_modify.py
-apply_fix.py
-inspect_cell.py
-nb_content.txt
-*_verified.py

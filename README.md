@@ -1,206 +1,68 @@
-# Mobility Maps from Google Timeline Data
+# Mobility Analytics Dashboard
 
-**Road usage, place visits, and spatial intensity maps**
+**Turn your Google Maps Timeline into data science portfolio pieces.**
 
-This project turns **Google Maps Timeline Data** into high-quality spatial maps showing:
+This project processes raw location history into:
+1.  **Network Analysis**: Road usage classification, frequent routes, and map-matched statistics.
+2.  **Spatial Intensity**: Beautiful KDE heatmaps and hexbin density plots.
+3.  **Place Analytics**: Semantic categorization of visits and dwell-time distributions.
 
-*   Roads you **frequent** vs roads you **never used**
-*   Places you spend time at (time-weighted)
-*   Visit purpose (POIs: cafés, universities, hospitals, etc.)
-*   Continuous spatial intensity fields (KDE / hexbin)
-*   Weekday vs weekend mobility patterns
-
-All outputs are publication-ready (high DPI PNGs) and saved to the `outputs/` folder.
+The notebooks are structured as narrative-driven analyses, ready to run and export high-quality figures to `outputs/`.
 
 ---
 
-## 1. Input data: Google Maps Timeline
+## 1. Getting Started
 
-### How to export your data
+### Prerequisites
+*   Python 3.8+
+*   Google Takeout Data (JSON format)
 
-Google has moved Location History to on-device "Timeline" storage. To export your data:
-
-1.  Open the **Google Maps** app on your phone.
-2.  Tap on your **profile picture**.
-3.  Select **Your data in Maps**.
-4.  Scroll down and tap on **Download your data**.
-5.  Follow the prompts to export your **Timeline** data (JSON format).
-6.  Once downloaded, extract the zip file.
-7.  Locate the main JSON file containing your history (often named `Records.json` or similar).
-8.  Rename or copy it into this project folder as:
-
-    ```text
-    location-history.json
-    ```
-
-> [!NOTE]
-> The script expects a single JSON file. If your export is split by year/month, you may need to merge them or analyze one at a time.
-
----
-
-## 2. Environment setup
-
-### Python version
-
-*   Python **3.9+** recommended
-
-### Required libraries
-
-Install dependencies:
-
+### Installation
 ```bash
-pip install numpy pandas matplotlib geopandas shapely osmnx scikit-learn rasterio contextily arabic-reshaper python-bidi
+pip install -r requirements.txt
+# OR manually:
+pip install numpy pandas matplotlib geopandas shapely osmnx scikit-learn
 ```
 
-> [!TIP]
-> OSMnx relies on the public **Overpass API**. Large regions or `network_type="all"` may take time to download.
+### Data Import
+1.  Export **Location History (Timeline)** from the Google Maps app (Settings > Your data in Maps).
+2.  Save the JSON file as `location-history.json` in this folder.
 
 ---
 
-## 3. Project structure
+## 2. The Notebooks
 
-```text
-.
-├── location-history.json        # Google Maps export (input)
-├── vector_map.ipynb             # Road + place vector maps analysis
-├── kde_processing.ipynb         # KDE / hexbin intensity maps analysis
-├── outputs/                     # Generated figures and tables (auto-created)
-├── read_nb.py                   # Utility script
-└── README.md
-```
+### 🗺️ `vector_map.ipynb`: Network & POI Analysis
+**Focus:** Structure and connectivity.
+*   **Map Matching**: Snaps noisy GPS points to the OpenStreetMap road network.
+*   **Road Usage**: Visualizes which specific street segments you use most.
+*   **Place Analytics**: Identifies your top spots and categorizes them (e.g., "Restaurant", "University").
+*   **Key Outputs**:
+    *   `frequented_roads.png`: Heatmap of road segments.
+    *   `places_frequented.png`: Dwell-time weighted locations.
+    *   `visit_categories_bar.png`: Chart of top semantic types.
+    *   `visits_summary.csv`: Cleaned data of your stops.
 
----
-
-## 4. Choosing the city / region
-
-### Base city
-
-At the top of the notebooks, configure your target area:
-
-```python
-CITY_NAME = "Beirut, Lebanon"
-```
-
-Change this to **any city recognized by OpenStreetMap**, e.g.:
-
-*   `"Paris, France"`
-*   `"Berlin, Germany"`
-*   `"New York City, USA"`
-
-### Expanding beyond city boundaries (recommended)
-
-Google location data often extends beyond administrative borders. Use a **buffer** to include suburbs:
-
-```python
-BUFFER_KM = 8   # radius around the city in kilometers
-```
-
-*   `4–6 km` → compact city
-*   `8–15 km` → city + suburbs
-*   `20+ km` → regional mobility
+### 🔥 `kde_processing.ipynb`: Spatial Density
+**Focus:** Continuous fields and intensity.
+*   **KDE (Kernel Density Estimation)**: Creates smooth probability fields of your presence.
+*   **Hexbin Maps**: Discrete binning for high-contrast density visualization.
+*   **Key Outputs**:
+    *   `kde_heatmap.png`: Smooth density field.
+    *   `hexbin_map.png`: Aggregated point density.
 
 ---
 
-## 5. Road network type
+## 3. Configuration & Tuning
 
-```python
-NETWORK_TYPE = "all"
-```
+Adjust these variables at the top of the notebooks:
 
-*   `"drive"` → car-accessible roads only (fast, clean)
-*   `"walk"` → pedestrian paths only
-*   `"all"` → **everything** (roads + footways + paths)
+*   **`CITY_NAME`**: "Beirut, Lebanon", "Paris, France", etc.
+*   **`BUFFER_KM`**: Radius around the city center to include (default 8km).
+*   **`MIN_VISIT_MIN`**: Minimum duration to count as a stop (default 3 mins).
 
 ---
 
-## 6. Key processing parameters
+## 4. Outputs
 
-### Visit cleaning
-
-```python
-MIN_VISIT_MIN = 3      # ignore micro-stops (< 3 minutes)
-MERGE_GAP_MIN = 10     # merge same-place visits if gap ≤ 10 min
-```
-
-### Movement weighting
-
-```python
-DT_CLIP_MAX_MIN = 30   # max time gap contribution per edge
-```
-
-### Speed sanity check
-
-```python
-MAX_SPEED_MPS = 60     # max valid speed (~216 km/h)
-```
-
----
-
-## 7. Spatial intensity maps (KDE / hexbin)
-
-### KDE bandwidth
-
-```python
-BW = 150   # meters
-```
-
-Controls **spatial smoothing**:
-*   `50–75 m` → very local (street-level)
-*   `100–150 m` → block scale (**recommended**)
-*   `250–400 m` → neighborhood scale
-
-### Grid resolution
-
-```python
-CELL = 10   # meters per pixel
-```
-
-Controls rendering detail. Smaller = higher quality but slower.
-
----
-
-## 8. Output maps
-
-All generated files are saved to the `outputs/` directory.
-
-### Vector maps
-*   **Roads I frequent**: Thicker lines indicate more time spent.
-*   **Roads never used**: Binary comparison.
-*   **Places I frequent**: Point size proportional to dwell time.
-*   **POI categories**: Color-coded by visit purpose.
-*   **Weekdays vs weekends**: Comparison maps.
-
-### Raster/intensity maps
-*   **KDE intensity**: Point-intensity field over roads.
-*   **Hexbin heatmaps**: Visit density by hexagonal bins.
-*   **Category-specific density**: Density of visits for specific POI types.
-
----
-
-## 9. Arabic labels
-
-Included helpers `arabic-reshaper` and `python-bidi` support correct rendering of Arabic text in plots (titles, legends).
-
----
-
-## 10. Performance notes
-
-It is **normal** for some steps to take time, especially:
-*   Large buffers + `network_type="all"` (slow Overpass downloads).
-*   POI queries (`amenity/shop/tourism`) returning many geometries.
-*   KDE with small `CELL` size over large regions.
-
----
-
-## 11. Interpretation caveats
-
-*   **"Never visited roads"**: Means no timeline points snapped to them.
-*   **Sparse GPS**: Sampling can miss short road segments.
-*   **Relative results**: Analysis is relative to the downloaded OSM network.
-*   **KDE**: Represents probability/intensity, not exact presence.
-
----
-
-## Summary
-
-This project provides a **full mobility analysis pipeline** from raw Google Timeline data to network-based road usage, place dwell analysis, and continuous spatial intensity maps. All parameters are explicit, documented, and adjustable.
+All generated files are saved to the `outputs/` directory. The notebooks are designed to be idempotent—re-running them overwrites the previous outputs.
